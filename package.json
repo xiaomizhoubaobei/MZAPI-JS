@@ -1,0 +1,63 @@
+{
+  "name": "mzapi-js",
+  "version": "0.1.0",
+  "description": "MZAPI是一个基于JavaScript的SDK，旨在帮助开发者快速接入各种API服务。通过这个SDK，用户可以轻松地完成各种API调用。",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "jaeger-client": "^3.19.0",
+    "skywalking-backend-js": "^0.7.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "mocha": "^8.3.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+git@github.com:xiaomizhoubaobei/MZAPI-JS.git"
+  },
+  "keywords": [
+    "SDK",
+    "XMZ",
+    "JavaScript",
+    "API"
+  ],
+  "author": {
+    "name": "小米粥",
+    "email": "mzapi@x.mizhoubaobei.top",
+    "url": "http://github.com/xiaomizhoubaobei/MZAPI-JS"
+  },
+  "contributors": [
+    {
+      "name": "小米粥",
+      "email": "mzapi@x.mizhoubaobei.top"
+    }
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xiaomizhoubaobei/MZAPI-JS/issues"
+  },
+  "homepage": "https://github.com/xiaomizhoubaobei/MZAPI-JS#readme",
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "files": [
+    "src"
+  ],
+  "directories": {
+    "lib": "src"
+  },
+  "eslintConfig": {
+    "extends": "eslint:recommended",
+    "env": {
+      "node": true,
+      "mocha": true
+    }
+  },
+  "prettier": {
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "semi": false,
+    "singleQuote": true
+  }
+}
