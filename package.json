@@ -14,7 +14,8 @@
     "rimraf": "^3.0.2"
   },
   "scripts": {
-    "clean": "rimraf node_modules coverage build"
+    "clean": "rimraf node_modules coverage build",
+    "build": "babel src -d build"
   },
   "repository": {
     "type": "git",
