@@ -10,11 +10,15 @@
   "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-preset-env": "^1.7.0",
-    "mocha": "^8.3.2"
+    "mocha": "^8.3.2",
+    "rimraf": "^3.0.2"
+  },
+  "scripts": {
+    "clean": "rimraf node_modules coverage build"
   },
   "repository": {
     "type": "git",
-    "url": "git+git@github.com:xiaomizhoubaobei/MZAPI-JS.git"
+    "url": "git+https://github.com/xiaomizhoubaobei/MZAPI-JS.git"
   },
   "keywords": [
     "SDK",
