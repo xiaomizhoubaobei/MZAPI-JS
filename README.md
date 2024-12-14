@@ -17,6 +17,7 @@ npm install xmzsdk
 
 1. **Fork 仓库**：
    - 首先，在 GitHub 上 Fork 本项目至您的个人仓库。
+   Github仓库地址：https://github.com/xiaomizhoubaobei/MZAPI-JS
 
 2. **创建特性分支**：
    - 使用命令 `git checkout -b feature/YourFeatureName` 创建一个新的特性分支。

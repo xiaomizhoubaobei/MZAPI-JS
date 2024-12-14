@@ -1,4 +1,4 @@
-const initTracer = require('jaeger-client').initTracer
+import { initTracer } from 'jaeger-client';
 
 const config = {
   serviceName: 'xmzsdk-js',
@@ -10,20 +10,20 @@ const config = {
     logSpans: true,
     collectorEndpoint: 'http://ap-shanghai.apm.tencentcs.com:14268/api/traces',
   },
-}
+};
 
 const options = {
   tags: {
     token: 'kCrxvCIYEzhZfAHETXEB',
     'xmzsdk.version': '1.0.0',
   },
-}
+};
 
-const tracer = initTracer(config, options)
+const tracer = initTracer(config, options);
 
 class APM {
   constructor() {
-    this.tracer = tracer
+    this.tracer = tracer;
   }
 
   startSpan(name, parentSpan = null) {
@@ -32,20 +32,20 @@ class APM {
   }
 
   finishSpan(span) {
-    span.finish()
+    span.finish();
   }
 
   addTags(span, tags) {
     for (const key in tags) {
       if (tags.hasOwnProperty(key)) {
-        span.setTag(key, tags[key])
+        span.setTag(key, tags[key]);
       }
     }
   }
 
   addTag(span, key, value) {
-    span.setTag(key, value)
+    span.setTag(key, value);
   }
 }
 
-module.exports = APM
+export default APM;

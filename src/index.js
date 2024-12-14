@@ -1,3 +1,3 @@
-import NewFeature from './newFeature'
+import  NewFeature from './newFeature';
 
-module.exports = NewFeature;
+export default NewFeature;
