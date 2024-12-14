@@ -6,8 +6,8 @@ const ADDRESS_RECOGNITION_URL = 'https://aip.baidubce.com/rpc/2.0/nlp/v1/address
 
 const apm = new APM();
 
-function getAccessToken(apiKey, secretKey) {
-    const span = apm.startSpan('getAccessToken');
+function getAccessToken(apiKey, secretKey, parentSpan = null) {
+    const span = apm.startSpan('getAccessToken', parentSpan);
     apm.addTags(span, { apiKey, secretKey });
     return new Promise((resolve, reject) => {
         const options = {
@@ -18,6 +18,7 @@ function getAccessToken(apiKey, secretKey) {
                 'Accept': 'application/json'
             }
         };
+        apm.addTag(span, 'url', options.url);
 
         axios(options)
             .then(response => {
@@ -39,9 +40,9 @@ function getAccessToken(apiKey, secretKey) {
     });
 }
 
-function recognizeAddress(accessToken, text) {
-    const span = apm.startSpan('recognizeAddress');
-    apm.addTags(span, { accessToken, text });
+function recognizeAddress(accessToken, text, parentSpan = null) {
+    const span = apm.startSpan('recognizeAddress', parentSpan);
+    apm.addTags(span, { text });
     return new Promise((resolve, reject) => {
         const options = {
             method: 'POST',
@@ -65,4 +66,4 @@ function recognizeAddress(accessToken, text) {
     });
 }
 
-module.exports = {getAccessToken,recognizeAddress}
+module.exports = { getAccessToken, recognizeAddress }

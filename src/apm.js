@@ -14,6 +14,7 @@ const config = {
 
 const options = {
   tags: {
+    token: 'kCrxvCIYEzhZfAHETXEB',
     'xmzsdk.version': '1.0.0',
   },
 }
@@ -25,8 +26,9 @@ class APM {
     this.tracer = tracer
   }
 
-  startSpan(name) {
-    return this.tracer.startSpan(name)
+  startSpan(name, parentSpan = null) {
+    const spanOptions = parentSpan ? { childOf: parentSpan } : undefined;
+    return this.tracer.startSpan(name, spanOptions);
   }
 
   finishSpan(span) {
@@ -43,14 +45,6 @@ class APM {
 
   addTag(span, key, value) {
     span.setTag(key, value)
-  }
-
-  addMultipleTags(span, tags) {
-    this.addTags(span, tags)
-  }
-
-  logCustomEvent(span, event, data) {
-    span.log({ event, ...data })
   }
 }
 
