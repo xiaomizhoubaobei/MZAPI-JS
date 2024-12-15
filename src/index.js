@@ -1,3 +1,3 @@
-import  NewFeature from './newFeature';
+const NewFeature = require('./newFeature.js');
 
-export default NewFeature;
+module.exports = NewFeature;
