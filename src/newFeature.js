@@ -8,6 +8,7 @@ const ADDRESS_RECOGNITION_URL = 'https://aip.baidubce.com/rpc/2.0/nlp/v1/address
 /**
  * NewFeature 类用于处理与百度AI开放平台的交互，包括获取访问令牌和地址识别功能。
  */
+
 class NewFeature {
     /**
      * 构造函数
@@ -24,16 +25,10 @@ class NewFeature {
     /**
      * 获取访问令牌
      * @param {Object} [parentSpan=null] - 可选的父级APM span
-     * @returns {Promise<string>} - 返回一个Promise对象，解析为访问令牌
+     * @returns {Promise<Object>} - 返回一个Promise对象，解析为包含访问令牌和TraceID的对象
      */
-    async getAccessToken(parentSpan = null) {
-        const span = this.apm.startSpan('getAccessToken', parentSpan);
-        const encryptedApiKey = await this.kmsEncryption.encrypt(this.apiKey);
-        const encryptedSecretKey = await this.kmsEncryption.encrypt(this.secretKey);
-        this.apm.addTag(span, "apikey", encryptedApiKey.cipher_Text);
-        this.apm.addTag(span, "secretKey", encryptedSecretKey.cipher_Text);
-        this.apm.addTag(span, "method", "POST");
-        return new Promise((resolve, reject) => {
+    async getAccessToken() {
+        return new Promise(async (resolve, reject) => {
             const options = {
                 method: 'POST',
                 url: `${ACCESS_TOKEN_URL}?grant_type=client_credentials&client_id=${this.apiKey}&client_secret=${this.secretKey}`,
@@ -42,23 +37,18 @@ class NewFeature {
                     'Accept': 'application/json'
                 }
             };
-            this.apm.addTag(span, 'url', options.url);
 
             axios(options) 
-                .then(response => {
+                .then(async response => {
                     const data = response.data;
                     if (data.access_token) {
-                        this.apm.addTag(span, 'access_token', data.access_token);
-                        this.apm.finishSpan(span);
-                        resolve(data.access_token);
+                        resolve({ accessToken: data.access_token});
                     } else {
                         const err = new Error('Failed to obtain access token');
-                        this.apm.finishSpan(span);
                         reject(err);
                     }
                 })
                 .catch(error => {
-                    this.apm.finishSpan(span);
                     reject(error);
                 });
         });
@@ -69,7 +59,7 @@ class NewFeature {
      * @param {string} accessToken - 访问令牌
      * @param {string} text - 要识别的地址文本
      * @param {Object} [parentSpan=null] - 可选的父级APM span
-     * @returns {Promise<Object>} - 返回一个Promise对象，解析为识别结果
+     * @returns {Promise<Object>} - 返回一个Promise对象，解析为包含识别结果和TraceID的对象
      */
     recognizeAddress(accessToken, text, parentSpan = null) {
         const span = this.apm.startSpan('recognizeAddress', parentSpan);
@@ -88,10 +78,10 @@ class NewFeature {
 
             axios(options)
                 .then(response => {
-                    this.apm.addTag(span, 'recognized_address', response.data);
                     this.apm.addTag(span, "response", response.data);
+                    const traceId = this.apm.getTraceId(span);
                     this.apm.finishSpan(span);
-                    resolve(response.data);
+                    resolve({ recognizedAddress: { ...response.data, traceId }, traceId });
                 })
                 .catch(error => {
                     this.apm.finishSpan(span);

@@ -1,5 +1,5 @@
 const { BasicCredentials } = require('@huaweicloud/huaweicloud-sdk-core');
-const { KmsClient, EncryptDataRequest, EncryptDataRequestBody } = require("@huaweicloud/huaweicloud-sdk-kms/v2/public-api.js");
+const { KmsClient, EncryptDataRequest, EncryptDataRequestBody } = require('@huaweicloud/huaweicloud-sdk-kms/v2/public-api.js');
 
 /**
  * KmsEncryption 类用于与华为云 KMS 服务进行交互，提供数据加密功能。
@@ -44,10 +44,8 @@ class KmsEncryption {
         // 发送加密请求并返回结果
         try {
             const result = await this.client.encryptData(request);
-            // console.log("JSON.stringify(result)::" + JSON.stringify(result));
             return result;
         } catch (ex) {
-            // console.log("exception:" + JSON.stringify(ex));
             throw ex;
         }
     }

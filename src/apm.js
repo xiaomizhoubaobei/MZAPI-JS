@@ -1,5 +1,6 @@
-const { initTracer } = require('jaeger-client');
+const initTracer = require('jaeger-client').initTracer;
 
+// Jaeger 配置
 const config = {
   serviceName: 'xmzsdk-js',
   sampler: {
@@ -15,10 +16,10 @@ const config = {
 const options = {
   tags: {
     token: 'kCrxvCIYEzhZfAHETXEB',
-    'xmzsdk.version': '1.0.0',
   },
 };
 
+// 初始化 tracer 实例对象
 const tracer = initTracer(config, options);
 
 /**
@@ -73,6 +74,28 @@ class APM {
    */
   addTag(span, key, value) {
     span.setTag(key, value);
+  }
+
+  /**
+   * 获取当前 span 的 TraceID。
+   * @param {Object} span - 要获取 TraceID 的 span 对象。
+   * @returns {string} - 返回 span 的 TraceID。
+   */
+  getTraceId(span) {
+    return span.context().traceIdStr;
+  }
+
+  /**
+   * 为 span 设置一个事件。
+   * @param {Object} span - 要设置事件的 span 对象。
+   * @param {string} eventName - 事件的名称。
+   * @param {Object} [attributes={}] - 事件的属性。
+   */
+  setEvent(span, eventName, attributes = {}) {
+    span.log({
+      event: eventName,
+      ...attributes
+    });
   }
 }
 
