@@ -1,6 +1,6 @@
 const axios = require('axios');
-const BaiduAuth = require("./ulis/baiduauth");
-const APM = require("../ulis/apm");
+const BaiduAuth = require("../ulis/baiduauth");
+const APM = require("../../ulis/apm");
 
 /**
  * Ernie4_8K类用于与百度文心大模型4.0-8K API进行交互
