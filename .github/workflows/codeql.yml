@@ -1,0 +1,50 @@
+name: "CodeQL Advanced"
+
+on:
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  analyze:
+     name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - language: javascript-typescript
+          build-mode: none
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
+
+    - name: Add PR Comment
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.TOKEN }}
+        script: |
+          const analysisResult = context.payload.analysis_result;
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `代码质量分析结果:\n${analysisResult}\n\n### 详细分析:\n- **代码质量评分:** ${analysisResult.score}\n- **潜在问题:**\n${analysisResult.issues.map(issue => `  - ${issue.type}: ${issue.message}`).join('\n')}\n- **改进建议:**\n${analysisResult.suggestions.map(suggestion => `  - ${suggestion}`).join('\n')}`
+          });

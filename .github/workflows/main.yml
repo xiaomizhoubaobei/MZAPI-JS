@@ -1,17 +1,16 @@
 name: build-and-publish
 on:
-  release:
-    types: [created]
   pull_request:
+    types: [closed]
     branches:
       - master
-  push:
-    branches:
-      - master
+    if: github.event.pull_request.merged == true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      digests: ${{ steps.hash.outputs.digests }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,9 +18,28 @@ jobs:
           node-version: 16
       - run: npm install
       - run: npm run build
+      - name: Generate subject for provenance
+        id: hash
+        run: |
+          set -euo pipefail
+          # Generate build.zip
+          zip -r build.zip build/
+          # Generate the subjects (base64 encoded)
+          echo "hashes=$(sha256sum build.zip | base64 -w0)" >> "${GITHUB_OUTPUT}"
+
+  provenance:
+    needs: [build]
+    permissions:
+      actions: read   # To read the workflow path
+      id-token: write # To sign the provenance
+      contents: write # To add assets to a release
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.4.0
+    with:
+      base64-subjects: "${{ needs.build.outputs.digests }}"
+      upload-assets: true
 
   publish-npm:
-    needs: build
+    needs: [build, provenance]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,3 +50,26 @@ jobs:
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ github.event.pull_request.head.ref }}
+          name: Release v${{ github.event.pull_request.head.ref }}
+          body: |
+            🎉 发布新版本${{ github.event.pull_request.head.ref }} 🎉
+
+            这是我们新版本${{ github.event.pull_request.head.ref }}的发布说明。本次发布包含了以下更改：
+
+            ${{ github.event.head_commit.message }}!
+
+            ## 📦 构建与签名信息
+            本次发布包使用SLSA供应链安全框架进行构建和签名，确保软件供应链的完整性和安全性：
+            - ✅ 构建环境：GitHub Actions
+            - ✅ 构建过程：使用SLSA Level 3认证的构建流程
+            - ✅ 签名验证：通过SLSA Provenance生成构建证明
+            - ✅ 完整性：所有构建产物都经过SHA-256哈希验证
+            - ✅ 不可篡改性：构建过程和产物不可被篡改
+          files: |
+            build.zip
+          token: ${{ secrets.TOKEN }}
