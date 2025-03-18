@@ -1,4 +1,4 @@
-# XMZSDK
+# MZAPI
 
 ## 项目概述
 MZAPI 是一个专为 JavaScript 开发者设计的 SDK，旨在简化与多种 API 服务的集成过程。利用此 SDK，开发者能够高效、便捷地执行各类 API 调用任务。
