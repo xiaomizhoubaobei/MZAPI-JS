@@ -1,0 +1,43 @@
+name: Debricked Scan on PR to master
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+    branches: [ master ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  vulnerabilities-scan:
+    name: Vulnerabilities scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: debricked/actions@v3
+        env:
+          DEBRICKED_TOKEN: ${{ secrets.DEBRICKED_TOKEN }}
+      - name: Comment PR with Debricked Results
+        uses: actions/github-script@v6
+        if: github.event.pull_request
+        env:
+          DEBRICKED_TOKEN: ${{ secrets.DEBRICKED_TOKEN }}
+        with:
+          script: |
+            const { pull_request: pullRequest } = context.payload
+            const { data: vulnerabilities } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pullRequest.number
+            })
+
+            const commentBody = `Debricked Scan Results:\n\n${vulnerabilities.map(v => `- ${v.dependency} - ${v.vulnerability}`).join('\n')}`
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pullRequest.number,
+              body: commentBody
+            })

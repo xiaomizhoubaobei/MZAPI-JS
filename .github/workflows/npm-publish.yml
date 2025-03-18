@@ -1,0 +1,52 @@
+name: Node.js Package
+
+on:
+  pull_request:
+    types: [ closed ]
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          registry-url: 'https://npm.pkg.github.com'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build --if-present
+
+      - name: Install Sigstore Cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: stable
+
+      - name: Sign the build files
+        run: |
+          cosign sign-blob --output-signature signature.sig --output-certificate cosign.cert build/
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get logIndex for Verification
+        run: |
+          # 使用 cosign 验证签名并获取 logIndex
+          logIndex=$(cosign verify-blob --certificate cosign.cert --signature signature.sig build/ | grep "logIndex" | awk '{print $2}')
+          echo "logIndex: $logIndex"
+          # 可以将 logIndex 存储到文件或环境变量中，供后续步骤使用
+          echo "logIndex=$logIndex" >> $GITHUB_ENV
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.TOKEN }}
