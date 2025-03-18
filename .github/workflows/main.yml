@@ -1,46 +1,26 @@
 name: build-and-publish
+
 on:
   pull_request:
     types: [closed]
-    branches:
-      - master
-    if: github.event.pull_request.merged == true
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    outputs:
-      digests: ${{ steps.hash.outputs.digests }}
+    if: github.event.pull_request.merged == true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 16
       - run: npm install
+      - run: npm test
       - run: npm run build
-      - name: Generate subject for provenance
-        id: hash
-        run: |
-          set -euo pipefail
-          # Generate build.zip
-          zip -r build.zip build/
-          # Generate the subjects (base64 encoded)
-          echo "hashes=$(sha256sum build.zip | base64 -w0)" >> "${GITHUB_OUTPUT}"
-
-  provenance:
-    needs: [build]
-    permissions:
-      actions: read   # To read the workflow path
-      id-token: write # To sign the provenance
-      contents: write # To add assets to a release
-    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.4.0
-    with:
-      base64-subjects: "${{ needs.build.outputs.digests }}"
-      upload-assets: true
 
   publish-npm:
-    needs: [build, provenance]
+    needs: build
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -49,27 +29,69 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: npm publish
         env:
-          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Create GitHub release
+  create-github-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 16
+      - name: Get version from package.json
+        id: get_version
+        run: echo ::set-output name=version::$(node -p "require('./package.json').version")
+      - name: Sign the build files
+        id: sign_build
+        run: |
+          # 安装 Sigstore Cosign
+          curl -sfL https://raw.githubusercontent.com/sigstore/cosign/main/install.sh | sudo sh
+          # 对 build 文件夹下的文件进行签名
+          cosign sign-blob --output-signature signature.sig --output-certificate cosign.cert build/
+          # 验证签名并获取相关信息
+          logIndex=$(cosign verify-blob --certificate cosign.cert --signature signature.sig build/ | grep "logIndex" | awk '{print $2}')
+          signatureID=$(cosign verify-blob --certificate cosign.cert --signature signature.sig build/ | grep "Signature ID" | awk '{print $3}')
+          certificateFingerprint=$(cosign verify-blob --certificate cosign.cert --signature signature.sig build/ | grep "Certificate Fingerprint" | awk '{print $3}')
+          echo "logIndex: $logIndex"
+          echo "signatureID: $signatureID"
+          echo "certificateFingerprint: $certificateFingerprint"
+          echo "::set-output name=logIndex::$logIndex"
+          echo "::set-output name=signatureID::$signatureID"
+          echo "::set-output name=certificateFingerprint::$certificateFingerprint"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.TOKEN }}
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.event.pull_request.head.ref }}
-          name: Release v${{ github.event.pull_request.head.ref }}
+          tag_name: v${{ steps.get_version.outputs.version }}
+          name: Release v${{ steps.get_version.outputs.version }}
           body: |
-            🎉 发布新版本${{ github.event.pull_request.head.ref }} 🎉
+            🎉 发布新版本${{ steps.get_version.outputs.version }} 🎉
 
-            这是我们新版本${{ github.event.pull_request.head.ref }}的发布说明。本次发布包含了以下更改：
-
-            ${{ github.event.head_commit.message }}!
-
-            ## 📦 构建与签名信息
-            本次发布包使用SLSA供应链安全框架进行构建和签名，确保软件供应链的完整性和安全性：
-            - ✅ 构建环境：GitHub Actions
-            - ✅ 构建过程：使用SLSA Level 3认证的构建流程
-            - ✅ 签名验证：通过SLSA Provenance生成构建证明
-            - ✅ 完整性：所有构建产物都经过SHA-256哈希验证
-            - ✅ 不可篡改性：构建过程和产物不可被篡改
+            **项目名称**: MZAPI
+            **版本号**: ${{ steps.get_version.outputs.version }}
+            **签名信息**:
+            - 此次发布的相关包已使用 Sigstore 进行签名，确保了软件的完整性和来源的可信性。Sigstore 是一个开源项目，旨在通过数字签名技术保护软件供应链的安全。通过 Sigstore 签名，用户可以验证软件包是否未被篡改，并确认其来源的合法性。Sigstore 使用了先进的加密技术，为软件发布提供了一层强大的保护，防止恶意软件的传播和软件供应链的攻击。
+            - **logIndex**: ${{ steps.sign_build.outputs.logIndex }}
+              这是签名在 Sigstore Transparency Log 中的索引，用于唯一标识此次签名。Transparency Log 是一个公开的、不可篡改的日志，记录了所有的签名信息，确保了签名的透明性和可追溯性。通过 logIndex，用户可以在 Sigstore 的 Transparency Log 中查询到此次签名的详细信息，包括签名的时间、签名者等。
+            - **Signature ID**: ${{ steps.sign_build.outputs.signatureID }}
+              这是签名的唯一标识符，用于在 Sigstore 中查找和验证签名。用户可以通过 Signature ID 在 Sigstore 的 Transparency Log 中查询到此次签名的详细信息，确保签名的有效性和可信性。
+            - **Certificate Fingerprint**: ${{ steps.sign_build.outputs.certificateFingerprint }}
+              这是用于签名的证书的指纹，用于验证签名的公钥。证书指纹是证书的唯一标识，用户可以通过证书指纹验证签名所使用的公钥是否合法，确保签名的完整性和可信性。
+            - **验证签名**:
+              您可以使用以下命令验证签名：
+              ```bash
+              cosign verify-blob \
+                --certificate cosign.cert \
+                --signature signature.sig \
+                --logindex ${{ steps.sign_build.outputs.logIndex }} \
+                build/
+              ```
+              如果验证成功，将显示签名有效信息，表示软件包未被篡改且来源合法。验证签名是确保软件安全的重要步骤，建议用户在使用软件包前进行签名验证，以保障软件的可信性和完整性。
+            本次发布包含了以下更改：
+            ${{ github.event.head_commit.message }}！
           files: |
-            build.zip
+            build/
           token: ${{ secrets.TOKEN }}

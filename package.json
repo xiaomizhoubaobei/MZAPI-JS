@@ -2,13 +2,14 @@
   "name": "mzapi",
   "version": "0.0.1",
   "description": "MZAPI是一个基于JavaScript的SDK,旨在帮助开发者快速接入各种API服务。通过这个SDK,用户可以轻松地完成各种API调用。",
-  "main": "src/1.js",
+  "main": "build/index.js",
   "files": [
-    "src"
+    "build"
   ],
   "scripts": {
     "clean": "rimraf node_modules coverage build",
-    "build": "babel src -d build"
+    "build": "babel src -d build",
+    "docs": "jsdoc src/ -d docs/"
   },
   "dependencies": {
     "@babel/core": "^7.26.0",
@@ -28,6 +29,7 @@
     "@opentelemetry/sdk-trace-node": "^1.30.1",
     "@opentelemetry/semantic-conventions": "^1.30.0",
     "axios": "^1.8.3",
+    "docdash": "^2.0.2",
     "express": "^4.21.2",
     "jaeger-client": "^3.19.0",
     "json": "^11.0.0",
@@ -38,7 +40,8 @@
     "@babel/plugin-proposal-object-rest-spread": "^7.14.7",
     "@babel/preset-env": "^7.14.5",
     "mocha": "^8.3.2",
-    "rimraf": "^3.0.2"
+    "rimraf": "^3.0.2",
+    "typescript": "^5.8.2"
   },
   "babel": {
     "presets": [

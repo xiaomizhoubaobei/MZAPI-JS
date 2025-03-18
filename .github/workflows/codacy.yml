@@ -1,0 +1,66 @@
+name: Codacy Security Scan
+
+on:
+  pull_request:
+    branches: [ "master" ]
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  codacy-security-scan:
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    name: Codacy Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Codacy Analysis CLI
+        uses: codacy/codacy-analysis-cli-action@d840f886c4bd4edc059706d09c6a1586111c540b
+        with:
+          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          verbose: true
+          output: results.sarif
+          format: sarif
+          gh-code-scanning-compat: true
+          max-allowed-issues: 2147483647
+
+      - name: Upload SARIF results file
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+
+      # 新增步骤：将 SARIF 结果转换为 PR 评论
+      - name: Comment on PR with SARIF results
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const sarif = require(`${process.env.GITHUB_WORKSPACE}/results.sarif`);
+            const results = sarif.runs[0].results;
+            
+            let comment = "## Codacy Security Scan Results\n";
+            comment += "| Rule ID | Message | Severity | Location |\n";
+            comment += "|---------|---------|----------|----------|\n";
+            
+            results.forEach(result => {
+              const ruleId = result.ruleId;
+              const message = result.message.text;
+              const severity = result.level;
+              const location = result.locations[0].physicalLocation.artifactLocation.uri;
+              comment += `| \`${ruleId}\` | ${message} | ${severity} | \`${location}\` |\n`;
+            });
+            
+            const prNumber = context.payload.pull_request.number;
+            github.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: comment
+            });
