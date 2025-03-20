@@ -105,6 +105,20 @@ abstract class BaiduERNIEBase {
      * @param {number} [top_p=0.8] - 采样参数，控制输出token的多样性
      * @param {number} [penalty_score=1.0] - 重复惩罚系数
      * @param {number} [max_output_tokens=1024] - 最大输出token数量
+     * @param {boolean} [stream=false] - 是否使用流式响应模式，true表示使用流式响应，false表示使用普通响应
+     * @returns {Promise<APIResponse>} 返回API的响应数据
+     * @throws {Error} 如果参数校验失败或API请求失败，将抛出错误
+     */
+    /**
+     * 向百度文心大模型发送请求
+     * @param {Message[]} messages - 对话消息数组
+     * @param {number} [temperature=0.8] - 采样温度，控制输出的随机性
+     * @param {number} [top_p=0.8] - 采样参数，控制输出token的多样性
+     * @param {number} [penalty_score=1.0] - 重复惩罚系数
+     * @param {number} [max_output_tokens=1024] - 最大输出token数量
+     * @param {boolean} [stream=false] - 是否使用流式响应模式
+     * @param {boolean} [enable_system_memory=false] - 是否开启系统记忆功能，开启后需要提供system_memory_id
+     * @param {string} [system_memory_id] - 系统记忆ID，当enable_system_memory为true时必须提供，用于标识和恢复对话上下文
      * @returns {Promise<APIResponse>} 返回API的响应数据
      * @throws {Error} 如果参数校验失败或API请求失败，将抛出错误
      */
@@ -113,7 +127,10 @@ abstract class BaiduERNIEBase {
         temperature: number = 0.8,
         top_p: number = 0.8,
         penalty_score: number = 1.0,
-        max_output_tokens: number = 1024
+        max_output_tokens: number = 1024,
+        stream: boolean = false,
+        enable_system_memory: boolean = false,
+        system_memory_id?: string
     ): Promise<APIResponse> {
         this.validateMessages(messages);
         this.validateParameters(temperature, top_p, penalty_score, max_output_tokens);
@@ -130,7 +147,10 @@ abstract class BaiduERNIEBase {
                 temperature,
                 top_p,
                 penalty_score,
-                max_output_tokens
+                max_output_tokens,
+                stream,
+                enable_system_memory,
+                system_memory_id
             })
         };
 
@@ -181,6 +201,75 @@ abstract class BaiduERNIEBase {
     }
 
     /**
+     * 发送流式请求并通过回调函数处理响应
+     * @param {Message[]} messages - 对话消息数组
+     * @param {(chunk: string) => void} callback - 处理每个文本块的回调函数
+     * @param {number} [temperature=0.8] - 采样温度
+     * @param {number} [top_p=0.8] - 采样参数
+     * @param {number} [penalty_score=1.0] - 重复惩罚系数
+     * @param {number} [max_output_tokens=1024] - 最大输出token数量
+     * @param {boolean} [enable_system_memory=false] - 是否开启系统记忆功能，开启后需要提供system_memory_id
+     * @returns {Promise<void>}
+     * @throws {Error} 如果参数校验失败或API请求失败，将抛出错误
+     */
+    async streamRequest(
+        messages: Message[],
+        callback: (chunk: string) => void,
+        temperature: number = 0.8,
+        top_p: number = 0.8,
+        penalty_score: number = 1.0,
+        max_output_tokens: number = 2048,
+        enable_system_memory: boolean = false
+    ): Promise<void> {
+        this.validateMessages(messages);
+        this.validateParameters(temperature, top_p, penalty_score, max_output_tokens);
+
+        const accessToken = await this.getAccessToken();
+        const options: AxiosRequestConfig = {
+            method: 'POST',
+            url: `${this.apiUrl}?access_token=${accessToken}`,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            data: JSON.stringify({
+                messages,
+                temperature,
+                top_p,
+                penalty_score,
+                max_output_tokens,
+                stream: true,
+                enable_system_memory
+            }),
+            responseType: 'stream'
+        };
+
+        try {
+            const response = await axios(options);
+            response.data.on('data', (chunk: Buffer) => {
+                const lines = chunk.toString().split('\n');
+                for (const line of lines) {
+                    if (line.trim() === '') continue;
+                    try {
+                        const data = JSON.parse(line);
+                        if (data.result) {
+                            callback(data.result);
+                        }
+                    } catch (error) {
+                        console.error('解析流式数据失败:', error);
+                    }
+                }
+            });
+
+            await new Promise((resolve, reject) => {
+                response.data.on('end', resolve);
+                response.data.on('error', reject);
+            });
+        } catch (error) {
+            throw new Error(`流式请求失败: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /**
      * 验证参数范围
      * @param {number} temperature - 采样温度
      * @param {number} top_p - 采样参数
@@ -193,7 +282,7 @@ abstract class BaiduERNIEBase {
         temperature: number,
         top_p: number,
         penalty_score: number,
-        max_output_tokens: number
+        max_output_tokens: number,
     ): void {
         if (temperature <= 0 || temperature > 1.0) {
             throw new Error('temperature参数必须是数字且取值范围为(0, 1.0]');

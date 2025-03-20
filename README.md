@@ -1,7 +1,16 @@
 # MZAPI
 
 ## 项目概述
-MZAPI 是一个专为 JavaScript 开发者设计的 SDK，旨在简化与多种 API 服务的集成过程。利用此 SDK，开发者能够高效、便捷地执行各类 API 调用任务。
+
+MZAPI 是一个专为 JavaScript 开发者设计的 SDK，旨在简化与多种 API 服务的集成过程。目前主要提供百度文心大模型API的接入功能，让开发者能够高效、便捷地执行各类使用API得任务。
+
+## 功能特性
+
+- **简单易用**：提供简洁的API接口，快速实现AI对话功能
+- **类型支持**：使用TypeScript开发，提供完整的类型定义
+- **错误处理**：内置智能的错误处理机制，提供清晰的错误提示
+- **自动令牌管理**：自动处理访问令牌的获取和刷新
+- **参数验证**：API调用参数的自动验证，避免无效请求
 
 ## 安装指南
 
@@ -10,6 +19,22 @@ MZAPI 是一个专为 JavaScript 开发者设计的 SDK，旨在简化与多种 
 ```bash
 npm install MZAPI
 ```
+
+## 使用示例
+
+详细使用示例请见[示例代码](https://github.com/xiaomizhoubaobei/MZAPI/blob/master/JS/list.md)。
+
+## API文档
+
+### Ernie4_8K 类
+
+主要的类和接口说明：
+
+- `Ernie4_8K`: 百度文心大模型4.0-8K版本的API封装
+- `Message`: 对话消息接口，包含role和content字段
+- `APIResponse`: API响应数据接口，包含生成结果和token使用统计
+
+详细的API文档请访问我们的[在线文档](https://api.mizhoubaobei.top)。
 
 ## 开发者贡献指南
 

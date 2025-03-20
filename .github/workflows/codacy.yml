@@ -43,25 +43,39 @@ jobs:
         with:
           github-token: ${{ secrets.TOKEN }}
           script: |
-            const sarif = require(`${process.env.GITHUB_WORKSPACE}/results.sarif`);
-            const results = sarif.runs[0].results;
+            const fs = require('fs');
+            const path = require('path');
             
-            let comment = "## Codacy Security Scan Results\n";
-            comment += "| Rule ID | Message | Severity | Location |\n";
-            comment += "|---------|---------|----------|----------|\n";
+            try {
+              const sarifPath = path.join(process.env.GITHUB_WORKSPACE, 'results.sarif');
+              const sarifContent = fs.readFileSync(sarifPath, 'utf8');
+              const sarif = JSON.parse(sarifContent);
             
-            results.forEach(result => {
-              const ruleId = result.ruleId;
-              const message = result.message.text;
-              const severity = result.level;
-              const location = result.locations[0].physicalLocation.artifactLocation.uri;
-              comment += `| \`${ruleId}\` | ${message} | ${severity} | \`${location}\` |\n`;
-            });
+              if (!sarif.runs || !sarif.runs[0] || !sarif.runs[0].results) {
+                throw new Error('Invalid SARIF file structure');
+              }
             
-            const prNumber = context.payload.pull_request.number;
-            github.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: prNumber,
-              body: comment
-            });
+              const results = sarif.runs[0].results;
+            
+              let comment = "## Codacy Security Scan Results\n";
+              comment += "| Rule ID | Message | Severity | Location |\n";
+              comment += "|---------|---------|----------|----------|\n";
+            
+              results.forEach(result => {
+                const ruleId = result.ruleId || 'N/A';
+                const message = result.message?.text || 'N/A';
+                const severity = result.level || 'N/A';
+                const location = result.locations?.[0]?.physicalLocation?.artifactLocation?.uri || 'N/A';
+                comment += `| \`${ruleId}\` | ${message} | ${severity} | \`${location}\` |\n`;
+              });
+            
+              const prNumber = context.payload.pull_request.number;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: comment
+              });
+            } catch (error) {
+              core.setFailed(`Error processing SARIF results: ${error.message}`);
+            }

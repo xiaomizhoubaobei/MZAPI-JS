@@ -41,6 +41,7 @@ jobs:
       - name: Comment on Pull Request
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.TOKEN }}
           script: |
             try {
               const analysisResults = JSON.stringify(${{ steps.codeql-analysis.outputs.results }}, null, 2);
