@@ -42,14 +42,22 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const analysisResults = ${{ steps.codeql-analysis.outputs.results }}
-            if (analysisResults) {
-              const prNumber = context.payload.pull_request.number
-              const commentBody = `## CodeQL Analysis Results\n\n${analysisResults}`
-              github.rest.issues.createComment({
-                issue_number: prNumber,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: commentBody
-              })
+            try {
+              const analysisResults = JSON.stringify(${{ steps.codeql-analysis.outputs.results }}, null, 2);
+              if (analysisResults && analysisResults !== 'null') {
+                const prNumber = context.payload.pull_request.number;
+                const commentBody = `## CodeQL Analysis Results\n\n\`\`\`json\n${analysisResults}\n\`\`\``;
+                await github.rest.issues.createComment({
+                  issue_number: prNumber,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: commentBody
+                });
+                console.log('Successfully posted CodeQL results as PR comment');
+              } else {
+                console.log('No CodeQL analysis results to post');
+              }
+            } catch (error) {
+              console.error('Error posting CodeQL results:', error);
+              throw error;
             }

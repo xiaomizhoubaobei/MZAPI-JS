@@ -40,4 +40,5 @@ coverage/
 .DS_Store
 Thumbs.db
 *.tgz
-src/1.js
+/src/1.ts
+/JS

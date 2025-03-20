@@ -27,7 +27,7 @@ jobs:
         with:
           script: |
             const { pull_request: pullRequest } = context.payload
-            const { data: { vulnerabilities } } = await github.rest.issues.listRepoComments({
+            const { data: vulnerabilities } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pullRequest.number
