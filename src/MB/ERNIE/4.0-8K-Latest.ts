@@ -1,9 +1,9 @@
 import BaiduERNIEBase, {APIResponse, Message} from '../ulis/base';
 
 /**
- * Ernie4_8K类用于与百度文心大模型Ernie4_8K_Preview进行交互
+ * Ernie4_8K类用于与百度文心大模型4.0-8K API进行交互
  *
- * 该类继承自BaiduERNIEBase，提供了与百度文心大模型Ernie4_8K_Preview版本API交互的功能。
+ * 该类继承自BaiduERNIEBase，提供了与百度文心大模型4.0-8K版本API交互的功能。
  * 主要功能包括：
  * - 自动获取和管理访问令牌
  * - 发送对话请求并处理响应
@@ -14,7 +14,7 @@ import BaiduERNIEBase, {APIResponse, Message} from '../ulis/base';
  * @example
  * ```typescript
  * // 创建实例
- * const ernie = new Ernie4_8K_Preview('your_api_key', 'your_secret_key');
+ * const ernie = new Ernie4_8K('your_api_key', 'your_secret_key');
  *
  * // 基本对话示例
  * const messages: Message[] = [
@@ -36,7 +36,7 @@ import BaiduERNIEBase, {APIResponse, Message} from '../ulis/base';
  * );
  * ```
  */
-class Ernie4_8K_Preview extends BaiduERNIEBase {
+class Ernie4_8K_Latest extends BaiduERNIEBase {
     /**
      * 创建Ernie4_8K实例
      *
@@ -47,18 +47,18 @@ class Ernie4_8K_Preview extends BaiduERNIEBase {
      * @example
      * ```typescript
      * // 基本实例化
-     * const ernie = new Ernie4_8K_Preview('your_api_key', 'your_secret_key');
+     * const ernie = new Ernie4_8K_Latest('your_api_key', 'your_secret_key');
      *
      * // 错误处理示例
      * try {
-     *   const ernie = new Ernie4_8K_Preview('', ''); // 将抛出错误
+     *   const ernie = new Ernie4_8K_Latest('', ''); // 将抛出错误
      * } catch (error) {
      *   console.error('初始化失败:', error.message);
      * }
      * ```
      */
     constructor(apiKey: string, secretKey: string) {
-        const apiUrl = BaiduERNIEBase.BASE_URL + 'completions_pro';
+        const apiUrl = BaiduERNIEBase.BASE_URL + 'ernie-4.0-8k-latest';
         super(apiKey, secretKey, apiUrl);
     }
 
@@ -124,7 +124,7 @@ class Ernie4_8K_Preview extends BaiduERNIEBase {
     }
 
     /**
-     * 向百度文心大模型Ernie4_8K_Preview发送流式对话请求
+     * 向百度文心大模型4.0-8K发送流式对话请求
      *
      * @param {Message[]} messages - 对话消息数组，每条消息必须包含role和content字段
      * @param {(chunk: string) => void} callback - 处理每个文本块的回调函数
@@ -177,4 +177,4 @@ class Ernie4_8K_Preview extends BaiduERNIEBase {
     }
 }
 
-export default Ernie4_8K_Preview;
+export default Ernie4_8K_Latest;
