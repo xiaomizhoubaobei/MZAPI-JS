@@ -11,3 +11,4 @@ export {Message} from './MB/ulis/base';
 export {default as Ernie4_8K} from './MB/ERNIE/4.0-8K';
 export {default as Ernie4_8K_Preview} from './MB/ERNIE/4.0-8K-Preview';
 export {default as Ernie4_8K_Latest} from './MB/ERNIE/4.0-8K-Latest';
+export {default as Ernie4_Turbo_8K} from './MB/ERNIE/4.0-Turbo-8K';
