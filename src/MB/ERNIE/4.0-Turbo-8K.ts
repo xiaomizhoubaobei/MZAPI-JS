@@ -1,9 +1,9 @@
 import BaiduERNIEBase, {APIResponse, Message} from '../ulis/base';
 
 /**
- * Ernie4_8K_Latest类用于与百度文心大模型4.0-8K-Latest API进行交互
+ * Ernie4_8K类用于与百度文心大模型4.0-Turbo-8K API进行交互
  *
- * 该类继承自BaiduERNIEBase，提供了与百度文心大模型4.0-8K-Latest版本API交互的功能。
+ * 该类继承自BaiduERNIEBase，提供了与百度文心大模型4.0-Turbo-8K版本API交互的功能。
  * 主要功能包括：
  * - 自动获取和管理访问令牌
  * - 发送对话请求并处理响应
@@ -14,7 +14,7 @@ import BaiduERNIEBase, {APIResponse, Message} from '../ulis/base';
  * @example
  * ```typescript
  * // 创建实例
- * const ernie = new Ernie4_8K_Latest('your_api_key', 'your_secret_key');
+ * const ernie = new Ernie4_Turbo_8K('your_api_key', 'your_secret_key');
  *
  * // 基本对话示例
  * const messages: Message[] = [
@@ -36,7 +36,7 @@ import BaiduERNIEBase, {APIResponse, Message} from '../ulis/base';
  * );
  * ```
  */
-class Ernie4_8K_Latest extends BaiduERNIEBase {
+class Ernie4_Turbo_8K extends BaiduERNIEBase {
     /**
      * 创建Ernie4_8K实例
      *
@@ -47,18 +47,18 @@ class Ernie4_8K_Latest extends BaiduERNIEBase {
      * @example
      * ```typescript
      * // 基本实例化
-     * const ernie = new Ernie4_8K_Latest('your_api_key', 'your_secret_key');
+     * const ernie = new Ernie4_Turbo_8K('your_api_key', 'your_secret_key');
      *
      * // 错误处理示例
      * try {
-     *   const ernie = new Ernie4_8K_Latest('', ''); // 将抛出错误
+     *   const ernie = new Ernie4_Turbo_8K('', ''); // 将抛出错误
      * } catch (error) {
      *   console.error('初始化失败:', error.message);
      * }
      * ```
      */
     constructor(apiKey: string, secretKey: string) {
-        const apiUrl = BaiduERNIEBase.BASE_URL + 'ernie-4.0-8k-latest';
+        const apiUrl = BaiduERNIEBase.BASE_URL + 'completions_pro';
         super(apiKey, secretKey, apiUrl);
     }
 
@@ -177,4 +177,4 @@ class Ernie4_8K_Latest extends BaiduERNIEBase {
     }
 }
 
-export default Ernie4_8K_Latest;
+export default Ernie4_Turbo_8K;
